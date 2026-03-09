@@ -22,21 +22,21 @@ q2. How will you represent a Matrix?
 
 q3. Can you implement the following operations?
 
-    Vector addition, subtraction
+    Vector addition, subtraction - done
 
-    Scalar multiplication
+    Scalar multiplication  - done
 
-    Dot product
+    Dot product - done
 
-    Cross product (3D)
+    Cross product (3D) - done
 
-    Vector norm
+    Vector norm - done
 
-    Matrix addition
+    Matrix addition - done
 
-    Matrix multiplication
+    Matrix multiplication - done
 
-    Matrix transpose
+    Matrix transpose - done
 
 q4. Can your library:
     - Check dimension compatibility automatically?
@@ -64,8 +64,39 @@ Final Challenge
 # Matrices
 # transpose, determinant, inverse, gaussian elimination
 
+#LU decomposition, QR decomposition, Eigenvalues, Power iteration, SVD
 
+import math 
+import numpy as np
+import pygame
+
+pygame.init()
+screen_width = 800
+screen_height = 600
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Vector Visualization")
+
+class Pygame3dEngine:
+    def __init__(self):
+        pygame.init()
+        self.running = True
+        self.display = pygame.display.Info().current_w, pygame.display.Info().current_h
+        self.font = pygame.font.SysFont('Comic Sans', 12)
+        self.screen = pygame.display.set_mode(self.display, pygame.FULLSCREEN)
+        self.clock = pygame.time.Clock()
+
+    def check_for_quit(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+
+    def flip(self):
+        pygame.display.flip()
+        self.screen.fill("black")
+        self.clock.tick(60)
 class DimensionMismatchError(Exception):
+    # raise ValueError("Vectors must be of the same dimension")
+    # TODO: to be imported and used as from my_linear_algebra import Matrix, Vector
     pass
 
 
@@ -73,239 +104,70 @@ class NotSquareMatrixError(Exception):
     pass
 
 
-class SingularMatrixError(Exception):
-    pass
-
-# Utilities 
-def _is_numeric(value):
-    return isinstance(value, (int, float))
-
-
-def _validate_numeric_iterable(iterable):
-    for value in iterable:
-        if not _is_numeric(value):
-            raise TypeError("All elements must be numeric.")
-
-
-def _validate_rectangular(data):
-    if not data:
-        raise ValueError("Matrix cannot be empty.")
-
-    row_length = len(data[0])
-    for row in data:
-        if len(row) != row_length:
-            raise ValueError("Matrix rows must all have the same length.")
-
-
-def _deep_copy_2d(data):
-    return [row[:] for row in data]
-
 class Vector:
     def __init__(self, data):
-        if not hasattr(data, "__iter__"):
-            raise TypeError("Vector must be initialized with an iterable.")
+        self.data = data
+        self.n = len(data)
 
-        data = list(data)
-        if len(data) == 0:
-            raise ValueError("Vector cannot be empty.")
+    def add(self, v1):
+        if self.n != v1.n:
+            raise ValueError("Vectors must be of the same dimension")
+        result = [self.data[i] + v1.data[i] for i in range(self.n)]
+        return result
 
-        _validate_numeric_iterable(data)
+    def sub(self, v1):
+        if self.n != v1.n:
+            raise ValueError("Vectors must be of the same dimension")
+        result = [self.data[i] - v1.data[i] for i in range(self.n)]
+        return result
 
-        self._data = tuple(data)  # Immutable storage
-        self._dim = len(data)
+    def scalar_multiply(self, scalar):
+        result = [self.data[i] * scalar for i in range(self.n)]
+        return result
 
-    @property
-    def dimension(self):
-        return self._dim
-
-    def __repr__(self):
-        return f"Vector({list(self._data)})"
-
-    def __eq__(self, other):
-        return isinstance(other, Vector) and self._data == other._data
-
-    def __add__(self, other):
-        if not isinstance(other, Vector):
-            return NotImplemented
-        if self.dimension != other.dimension:
-            raise DimensionMismatchError("Vectors must have same dimension.")
-        return Vector([a + b for a, b in zip(self._data, other._data)])
-
-    def __sub__(self, other):
-        if not isinstance(other, Vector):
-            return NotImplemented
-        if self.dimension != other.dimension:
-            raise DimensionMismatchError("Vectors must have same dimension.")
-        return Vector([a - b for a, b in zip(self._data, other._data)])
-
-    def __mul__(self, scalar):
-        if not _is_numeric(scalar):
-            return NotImplemented
-        return Vector([a * scalar for a in self._data])
-
-    def __rmul__(self, scalar):
-        return self.__mul__(scalar)
-
-    def __truediv__(self, scalar):
-        if not _is_numeric(scalar):
-            return NotImplemented
-        if scalar == 0:
-            raise ZeroDivisionError("Cannot divide by zero.")
-        return Vector([a / scalar for a in self._data])
-
-    def __matmul__(self, other):
-        return self.dot(other)
-
-    def dot(self, other):
-        if not isinstance(other, Vector):
-            raise TypeError("Dot product requires another Vector.")
-        if self.dimension != other.dimension:
-            raise DimensionMismatchError("Vectors must have same dimension.")
-        return sum(a * b for a, b in zip(self._data, other._data))
-
-    def cross(self, other):
-        if not isinstance(other, Vector):
-            raise TypeError("Cross product requires another Vector.")
-        if self.dimension != 3 or other.dimension != 3:
-            raise DimensionMismatchError("Cross product is defined only for 3D vectors.")
-
-        a1, a2, a3 = self._data
-        b1, b2, b3 = other._data
-
-        return Vector([
-            a2 * b3 - a3 * b2,
-            a3 * b1 - a1 * b3,
-            a1 * b2 - a2 * b1
-        ])
-
+    def dot(self, v1):
+        if self.n != v1.n:
+            raise ValueError("Vectors must be of the same dimension")
+        result = sum(self.data[i] * v1.data[i] for i in range(self.n))
+        return result
+    
+    def cross (self, v1):
+        if self.n != 3 or v1.n != 3:
+            raise ValueError("Cross product is only defined for 3D vectors")
+        x = self.data[1] * v1.data[2] - self.data[2] * v1.data[1]
+        y = self.data[2] * v1.data[0] - self.data[0] * v1.data[2]
+        z = self.data[0] * v1.data[1] - self.data[1] * v1.data[0]
+        return Vector([x, y, z])
+    
     def norm(self):
-        return sum(a * a for a in self._data) ** 0.5
+        result = math.sqrt(sum(self.data[i] ** 2 for i in range(self.n)))
+        return result
+
+
 class Matrix:
     def __init__(self, data):
-        if not hasattr(data, "__iter__"):
-            raise TypeError("Matrix must be initialized with an iterable of iterables.")
+        self.data = data
+        self.rows = len(data)
+        self.cols = len(data[0]) if data else 0
 
-        data = [list(row) for row in data]
-
-        _validate_rectangular(data)
-
-        for row in data:
-            _validate_numeric_iterable(row)
-
-        self._data = _deep_copy_2d(data)
-        self._rows = len(data)
-        self._cols = len(data[0])
-
-    @property
-    def rows(self):
-        return self._rows
-
-    @property
-    def cols(self):
-        return self._cols
-
-    @property
-    def shape(self):
-        return (self._rows, self._cols)
-
-    def __repr__(self):
-        return f"Matrix({self._data})"
-
-    def __eq__(self, other):
-        return isinstance(other, Matrix) and self._data == other._data
-
-
-    def __add__(self, other):
-        if not isinstance(other, Matrix):
-            return NotImplemented
-        if self.shape != other.shape:
-            raise DimensionMismatchError("Matrices must have same shape.")
-
-        result = [
-            [a + b for a, b in zip(row_a, row_b)]
-            for row_a, row_b in zip(self._data, other._data)
-        ]
-        return Matrix(result)
-
-    def __sub__(self, other):
-        if not isinstance(other, Matrix):
-            return NotImplemented
-        if self.shape != other.shape:
-            raise DimensionMismatchError("Matrices must have same shape.")
-
-        result = [
-            [a - b for a, b in zip(row_a, row_b)]
-            for row_a, row_b in zip(self._data, other._data)
-        ]
-        return Matrix(result)
-
-    def __mul__(self, scalar):
-        if not _is_numeric(scalar):
-            return NotImplemented
-        result = [[a * scalar for a in row] for row in self._data]
-        return Matrix(result)
-
-    def __rmul__(self, scalar):
-        return self.__mul__(scalar)
-
-    def __matmul__(self, other):
-        if not isinstance(other, Matrix):
-            return NotImplemented
-        if self.cols != other.rows:
-            raise DimensionMismatchError(
-                "Matrix multiplication requires A.cols == B.rows."
-            )
-
-        result = []
-        for i in range(self.rows):
-            row = []
-            for j in range(other.cols):
-                value = sum(
-                    self._data[i][k] * other._data[k][j]
-                    for k in range(self.cols)
-                )
-                row.append(value)
-            result.append(row)
-
-        return Matrix(result)
-
-
+    def add(self, m1):
+        if self.rows != m1.rows or self.cols != m1.cols:
+            raise ValueError("Matrices must have the same dimensions")
+        result = [[self.data[i][j] + m1.data[i][j] for j in range(self.cols)] for i in range(self.rows)]
+        return result
+    
+    # for matrix multiplication, the number of columns of the first matrix must equal the number of rows of the second matrix meaning 2x3 and 3x2 can be multiplied but not 2x3 and 2x3 so the new matrix will be 2x2
+    def multiplication(self, m1):
+        if self.cols != m1.rows:
+            raise ValueError("Number of columns of the first matrix must equal number of rows of the second matrix")
+        result = [[sum(self.data[i][k] * m1.data[k][j] for k in range(self.cols)) for j in range(m1.cols)] for i in range(self.rows)]
+        return result
+    
+    # we can use  zip by python to swap values or numpy a.T for transpose 
     def transpose(self):
-        return Matrix([[self._data[j][i] for j in range(self.rows)]
-                       for i in range(self.cols)])
+        result = [[self.data[j][i] for j in range(self.rows)] for i in range(self.cols)]
+        return result
+    
 
-    def determinant(self):
-        if self.rows != self.cols:
-            raise NotSquareMatrixError("Determinant is defined only for square matrices.")
+#TODO: use pygame to visualize vector and matrix operations, like showing the result of a cross product as a new vector in 3D space, or showing the effect of a matrix transformation on a shape.
 
-        if self.rows == 2:
-            a, b = self._data[0]
-            c, d = self._data[1]
-            return a * d - b * c
-
-        if self.rows == 3:
-            a, b, c = self._data[0]
-            d, e, f = self._data[1]
-            g, h, i = self._data[2]
-            return (
-                a * (e * i - f * h)
-                - b * (d * i - f * g)
-                + c * (d * h - e * g)
-            )
-
-        raise NotImplementedError("Determinant implemented only for 2x2 and 3x3.")
-
-    def inverse(self):
-        if self.rows != self.cols:
-            raise NotSquareMatrixError("Inverse is defined only for square matrices.")
-
-        det = self.determinant()
-        if det == 0:
-            raise SingularMatrixError("Matrix is singular and cannot be inverted.")
-
-        if self.rows == 2:
-            a, b = self._data[0]
-            c, d = self._data[1]
-            return (1 / det) * Matrix([[d, -b], [-c, a]])
-
-        raise NotImplementedError("Inverse implemented only for 2x2 matrices.")
