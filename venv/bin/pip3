@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/Users/sudha/Projects/projects/psnl/practice/ py-inter/venv/bin/python" "$0" "$@"
-' '''
+#!/Users/sudha/Projects/projects/psnl/practice/py-inter/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
